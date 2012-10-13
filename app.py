@@ -48,7 +48,6 @@ def autoEncodeJa(url):
     lookup = ('utf-8', 'euc-jp', 'shift_jis', 'iso-2022-jp')
 
     data = urllib.urlopen(url).read()
-    data = data[:512]
 
     for encoding in lookup:
         try:
@@ -57,7 +56,7 @@ def autoEncodeJa(url):
         except UnicodeDecodeError:
             pass
     else:
-        encode = 'ascii'
+        encoding = 'ascii'
 
     return redirect(url_for('encodeJa', encoding=encoding, url=url))
 
