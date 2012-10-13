@@ -45,6 +45,9 @@ def upperDirectory(url, depth):
 
 @app.route('/ja/<path:url>')
 def autoEncodeJa(url):
+    if url.find(request.url_root) != -1:
+        return 'invalid request'
+    
     lookup = ('utf-8', 'euc-jp', 'shift_jis', 'iso-2022-jp')
 
     data = urllib.urlopen(url).read()
