@@ -80,11 +80,11 @@ def encodeJa(encoding, url):
                                       match_obj=x)
 
     content_type = 'text/html; charset=%s' % encoding
-    output = urllib.urlopen(url).read()
+    output = urllib.urlopen(url).read().decode(encoding)
     output = re.sub(url_exp, rep_func_url, output)
     output = re.sub(href_exp, rep_func_href, output)
 
-    return Response(output, content_type=content_type)
+    return Response(output.encode(encoding), content_type=content_type)
 
 
 @app.route('/')
