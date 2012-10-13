@@ -54,7 +54,7 @@ def application(encode, url):
 
 @app.route('/')
 def hello():
-    return "hello"
+    return "hello, world"
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
