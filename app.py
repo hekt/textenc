@@ -1,15 +1,15 @@
 import os
-from flask import Flask
-from flask import request
-from flask import Response
 import urllib
 import re
+from flask import Flask, Response, request, redirect, url_for, render_template
 
 app = Flask(__name__)
 
-def repHref(base_url, match_obj):
-    return "".join([match_obj.group(1), base_url,
-                    match_obj.group(2), match_obj.group(3)])
+def repHref(base_url, domain, match_obj):
+    url = match_obj.group(2)
+    if re.match(domain, url):
+        return "".join([match_obj.group(1), base_url, url, match_obj.group(3)])
+    return match_obj.group(0)
 
 def repUrl(url, match_obj):
     if not re.match("mailto:", match_obj.group(2)):
@@ -18,14 +18,14 @@ def repUrl(url, match_obj):
     return match_obj.group(0)
 
 def repRelPathToAbsPath(path, base_url):
-    if re.match("(/)?\.+/", path):
+    if re.match("http(s)?://", path):
+        return path
+    else:
         upper_depth = upperDepth(path)
         upper_path = upperDirectory(base_url, upper_depth)
         lower_path = re.sub("(/)?[\./]+/", '', path)
         
         return "%s/%s" % (upper_path, lower_path)
-    else:
-        return path
 
 def upperDepth(relative_path):
     cnt = 0
@@ -37,15 +37,39 @@ def upperDepth(relative_path):
 def upperDirectory(url, depth):
     return '/'.join(url.split('/')[:-(depth + 1)])
 
-@app.route('/<encode>/<path:url>')
-def application(encode, url):
+@app.route('/ja/<path:url>')
+def autoEncodeJa(url):
+    lookup = ('utf-8', 'euc-jp', 'shift_jis', 'iso-2022-jp')
+
+    data = urllib.urlopen(url).read()
+    data = data[:512]
+
+    for encoding in lookup:
+        try:
+            data = data.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            pass
+    else:
+        encode = 'ascii'
+    
+    return redirect(url_for('encodeJa', encoding=encoding, url=url))
+
+@app.route('/<encoding>/<path:url>')
+def encodeJa(encoding, url):
+    if url.find(request.url_root) != -1:
+        return 'invalid request'
+    
+    base_url = "%s%s/" % (request.url_root, str(encoding))
+    domain = '/'.join(url.split('/')[:3])
+    
     url_exp = re.compile("(href|src|action)=[\"']((?:/)?(?:\.+/)*[^\"']*?)[\"']", re.I)
     href_exp = re.compile("(<a.*?href=[\"'])([^\"']*?)([\"'].*?>)", re.I)
     rep_func_url = lambda x: repUrl(url=url, match_obj=x)
-    rep_func_href = lambda x: repHref(base_url=base_url, match_obj=x)
-    base_url = "%s%s/" % (request.url_root, str(encode))
+    rep_func_href = lambda x: repHref(base_url=base_url, domain=domain,
+                                      match_obj=x)
 
-    content_type = 'text/html; charset=%s' % encode
+    content_type = 'text/html; charset=%s' % encoding
     output = urllib.urlopen(url).read()
     output = re.sub(url_exp, rep_func_url, output)
     output = re.sub(href_exp, rep_func_href, output)
@@ -53,9 +77,10 @@ def application(encode, url):
     return Response(output, content_type=content_type)
 
 @app.route('/')
-def hello():
-    return "hello, world"
+def index():
+    return render_template('index.html')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
+    app.debug = True
     app.run(host="0.0.0.0", port=port)
