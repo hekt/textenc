@@ -7,12 +7,15 @@ import re
 
 app = Flask(__name__)
 
-def repHref(base_url, url, match_obj):
-    for p in match_obj.groups():
-        if p:
-            return 'href="%s%s"' % (base_url, repRelPathToAbsPath(p, base_url))
-    else:
-        return None
+def repHref(base_url, match_obj):
+    return "".join([match_obj.group(1), base_url,
+                    match_obj.group(2), match_obj.group(3)])
+
+def repUrl(url, match_obj):
+    if not re.match("mailto:", match_obj.group(2)):
+        return '%s="%s"' % (match_obj.group(1),
+                            repRelPathToAbsPath(match_obj.group(2), url))
+    return match_obj.group(0)
 
 def repRelPathToAbsPath(path, base_url):
     if re.match("(/)?\.+/", path):
@@ -36,12 +39,16 @@ def upperDirectory(url, depth):
 
 @app.route('/<encode>/<path:url>')
 def application(encode, url):
-    p = re.compile("href=(?:\"([^\"]*?)\"|'([^']*?)')", re.I)
+    url_exp = re.compile("(href|src|action)=[\"']((?:/)?(?:\.+/)*[^\"']*?)[\"']", re.I)
+    href_exp = re.compile("(<a.*?href=[\"'])([^\"']*?)([\"'].*?>)", re.I)
+    rep_func_url = lambda x: repUrl(url=url, match_obj=x)
+    rep_func_href = lambda x: repHref(base_url=base_url, match_obj=x)
     base_url = "%s%s/" % (request.url_root, str(encode))
-    repFunc = lambda x: repHref(base_url=base_url, url=url, match_obj=x)
 
     content_type = 'text/html; charset=%s' % encode
-    output = re.sub(p, repFunc, urllib.urlopen(url).read())
+    output = urllib.urlopen(url).read()
+    output = re.sub(url_exp, rep_func_url, output)
+    output = re.sub(href_exp, rep_func_href, output)
 
     return Response(output, content_type=content_type)
 
