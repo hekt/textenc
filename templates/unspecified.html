@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<article>
+  <div class="entry-body">
+    <h1>エンコードを特定できませんでした</h1>
+    <p>もしエンコードを知っているのなら、セレクトボックスから選択してください:</p>
+    <form action="{{ root_url }}form" id="form_unspecified">
+      <ul>
+        <li>
+          {{ root_url }}
+          <select name="select_encoding" id="select_encoding">
+            <option value="0" selected>Select</option>
+            {% for e in encodings %}
+            <option value="{{ e }}">{{ e }}</option>
+            {% endfor %}
+          </select>
+          /{{ received_url }}
+        </li>
+      </ul>
+      <input type="submit" value="Submit">
+    </form>
+  </div>
+</article>
+
+{% endblock %}

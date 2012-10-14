@@ -35,7 +35,7 @@ body > article h1 {
 article {
   font-size: 90%;
 }
-article input {
+input#bookmarklet_text {
   display: block;
   width: 100%;
   padding: 1em;
@@ -48,3 +48,29 @@ article input {
   background-color: #F8F8F8;
   font-family: monospace;
 }
+
+/* unspecified */
+#form_unspecified {
+  margin: 1em 0;
+  width: 100%;
+  padding: 1em;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  -o-box-sizing: border-box;
+  box-sizing: border-box;
+  border: 1px solid #CCC;
+  background-color: #F8F8F8;
+  font-family: monospace;
+}
+#form_unspecified li {
+  overflow: hidden;
+  white-space:nowrap;
+  color: #888;
+}
+#form_unspecified:after {
+  display: block;
+  clear:both;
+  content: "";
+}
+

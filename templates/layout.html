@@ -1,8 +1,12 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja"
+      data-rootUrl="{{ root_url }}"
+      data-receivedUrl="{{ received_url }}"
+      >
 
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" media="screen" href="{{ url_for('static', filename='normalize.css') }}">
 <link rel="stylesheet" media="screen" href="{{ url_for('static', filename='style.css') }}">
 <title>textenc: Text Encoding Selector</title>
 <!-- [if lte IE 8]>
@@ -17,6 +21,9 @@
 </header>
 
 {% block body %}{% endblock %}
+
+<script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='common.js') }}"></script>
 </body>
 
 </html>
