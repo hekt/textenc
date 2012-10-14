@@ -1,5 +1,7 @@
 # Text Encoding Selector
 
+[textenc.herokuapp.com](http://textenc.herokuapp.com/)
+
 ## Bookmarklets
 
 ```javascript
