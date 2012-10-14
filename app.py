@@ -136,8 +136,7 @@ def encodeJa(encoding, url):
 
 @app.route('/')
 def index():
-    base_url = "%s%s/" % (request.url_root, "ja")
-    return render_template('index.html', base_url=base_url)
+    return render_template('index.html', root_url=request.url_root)
 
 
 if __name__ == '__main__':
