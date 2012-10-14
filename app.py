@@ -7,9 +7,9 @@ app = Flask(__name__)
 
 
 class Replacements(object):
-    def repHrefToUnderApp(self, base_url, domain, match_obj):
+    def repHrefToUnderApp(self, base_url, received_root, match_obj):
         url = match_obj.group(2)
-        if re.match(domain, url):
+        if re.match(received_root, url):
             return "".join([match_obj.group(1), base_url, url,
                             match_obj.group(3)])
         return match_obj.group(0)
@@ -99,16 +99,16 @@ def encodeJa(encoding, url):
     if url.find(request.url_root) != -1:
         return multiplyError()
 
-    R = Replacements()
     base_url = "%s%s/" % (request.url_root, str(encoding))
-    domain = '/'.join(url.split('/')[:3])
+    received_root = '/'.join(url.split('/')[:3])
 
     url_exp = re.compile(("(href|src|action)="
                           "[\"']((?:/)?(?:\.+/)*[^\"']*?)[\"']"), re.I)
     href_exp = re.compile("(<a.*?href=[\"'])([^\"']*?)([\"'].*?>)", re.I)
+    R = Replacements()
     rep_func_url = lambda x: R.repUrlToAbs(url=url, match_obj=x)
     rep_func_href = lambda x: R.repHrefToUnderApp(base_url=base_url,
-                                                  domain=domain,
+                                                  received_root=received_root,
                                                   match_obj=x)
 
     content_type = 'text/html; charset=%s' % encoding
