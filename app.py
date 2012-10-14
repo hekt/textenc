@@ -13,16 +13,14 @@ class Replacements(object):
             return "".join([match_obj.group(1), base_url, url,
                             match_obj.group(3)])
         return match_obj.group(0)
-     
-     
+
     def repUrlToAbs(self, url, match_obj):
         if not re.match("mailto:", match_obj.group(2)):
             return '%s="%s"' % (match_obj.group(1),
                                 self.repRelPathToAbsPath(match_obj.group(2),
                                                          url))
         return match_obj.group(0)
-     
-     
+
     def repRelPathToAbsPath(self, path, base_url):
         if re.match("http(s)?://", path):
             return path
@@ -30,18 +28,16 @@ class Replacements(object):
             upper_depth = self.upperDepth(path)
             upper_path = self.upperDirectory(base_url, upper_depth)
             lower_path = re.sub("(/)?[\./]+/", '', path)
-     
+
             return "%s/%s" % (upper_path, lower_path)
-     
-     
+
     def upperDepth(self, relative_path):
         cnt = 0
         for s in relative_path.split('/'):
             if re.match("\.{2,}", s):
                 cnt += (len(s) - 1)
         return cnt
-     
-     
+
     def upperDirectory(self, url, depth):
         return '/'.join(url.split('/')[:-(depth + 1)])
 
@@ -72,7 +68,7 @@ def unspecified(url):
 def autoEncodeJa(url):
     if url.find(request.url_root) != -1:
         return multiplyError()
-    
+
     encodings = ('utf-8', 'euc-jp', 'shift_jis', 'iso-2022-jp')
 
     try:
@@ -124,11 +120,11 @@ def encodeJa(encoding, url):
         data = data.decode(encoding)
     except UnicodeDecodeError:
         return decodeError()
-                        
+
     data = re.sub(url_exp, rep_func_url, data)
     data = re.sub(href_exp, rep_func_href, data)
     data = data.encode(encoding)
-    
+
     output = data
 
     return Response(output, content_type=content_type)
