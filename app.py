@@ -56,9 +56,19 @@ class ErrorPages(object):
                                root_url=request.url_root), 500
 
 
-@app.route('/debug')
-def debugPage():
-    return request.environ['HTTP_USER_AGENT']
+@app.route('/form')
+def form():
+    encoding = request.args.get('encoding')
+    url = request.args.get('url')
+
+    if encoding is None or url is None:
+        return ErrorPages().invalidUrlError()
+    
+    if encoding == 'Ja':
+        return redirect(url_for('autoEncodeJa', url=url))
+    
+    return redirect(url_for('encodeJa', encoding=encoding, url=url))
+
 
 @app.route('/unspecified/<path:url>')
 def unspecified(url):
@@ -146,5 +156,5 @@ def index():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.debug = True
+    # app.debug = True
     app.run(host="0.0.0.0", port=port)
