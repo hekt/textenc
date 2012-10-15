@@ -9,21 +9,40 @@ app = Flask(__name__)
 
 
 class Replacements(object):
-    def repHrefToUnderApp(self, base_url, received_root, match_obj):
-        url = match_obj.group(2)
-        if re.match(received_root, url):
-            return "".join([match_obj.group(1), base_url, url,
+    def doReplace(self, data, base_url, received_url):
+        base_tag = '<base href="%s">' % received_url
+
+        received_root = '/'.join(received_url.split('/')[:3])
+        head_exp = re.compile("<head(\s+([^>]|\"[^\"]*?\"|'[^']*?'))*?>", re.I)
+        href_exp = re.compile("(<a.*?href=[\"'])([^\"']*?)([\"'].*?>)", re.I)
+        base_exp = re.compile(("<base(\s|href=[\"'][^\"']+[\"']|"
+                               "target=[\"'][^\"']*[\"'])+>"), re.I)
+        rep_func_head = lambda x: "\n".join([x.group(0), base_tag])
+        rep_func_href = lambda x: self.hrefToUnderApp(x, base_url,
+                                                      received_url,
+                                                      received_root)
+
+        # add base tag if not use one
+        if re.search(base_exp, data) is None:
+            data = re.sub(head_exp, rep_func_head, data)
+
+        # replace link to under app url
+        data = re.sub(href_exp, rep_func_href, data)
+
+        return data
+
+    def hrefToUnderApp(self, match_obj, base_url, received, received_root):
+        path = match_obj.group(2)
+        if re.match(received_root, path):
+            return "".join([match_obj.group(1), base_url, path,
+                            match_obj.group(3)])
+        elif not re.match("http(s)?://", path):
+            return "".join([match_obj.group(1), base_url,
+                            self.relPathToAbsPath(path, received),
                             match_obj.group(3)])
         return match_obj.group(0)
 
-    def repUrlToAbs(self, url, match_obj):
-        if not re.match("mailto:", match_obj.group(2)):
-            return '%s="%s"' % (match_obj.group(1),
-                                self.repRelPathToAbsPath(match_obj.group(2),
-                                                         url))
-        return match_obj.group(0)
-
-    def repRelPathToAbsPath(self, path, base_url):
+    def relPathToAbsPath(self, path, base_url):
         if re.match("http(s)?://", path):
             return path
         else:
@@ -60,7 +79,7 @@ class ErrorPages(object):
         message = u"指定された URL からウェブページを取得できませんでした。"
         return self.basicErrorPage(title, message)
 
-    def decode(self):
+    def decodeFailed(self):
         title = u"デコードに失敗しました"
         message = (u"実際に使われている物とは異なるエンコードが"
                    u"選択されたようです。")
@@ -128,17 +147,6 @@ def encodeJa(encoding, url):
         return ErrorPages().multiply()
 
     base_url = "%s%s/" % (request.url_root, str(encoding))
-    received_root = '/'.join(url.split('/')[:3])
-
-    url_exp = re.compile(("(href|src|action)="
-                          "[\"']((?:/)?(?:\.+/)*[^\"']*?)[\"']"), re.I)
-    href_exp = re.compile("(<a.*?href=[\"'])([^\"']*?)([\"'].*?>)", re.I)
-    R = Replacements()
-    rep_func_url = lambda x: R.repUrlToAbs(url=url, match_obj=x)
-    rep_func_href = lambda x: R.repHrefToUnderApp(base_url=base_url,
-                                                  received_root=received_root,
-                                                  match_obj=x)
-
     content_type = 'text/html; charset=%s' % encoding
 
     opener = urllib2.build_opener()
@@ -154,10 +162,9 @@ def encodeJa(encoding, url):
     try:
         data = data.decode(encoding)
     except UnicodeDecodeError:
-        return ErrorPages().decode()
+        return ErrorPages().decodeFailed()
 
-    data = re.sub(url_exp, rep_func_url, data)
-    data = re.sub(href_exp, rep_func_href, data)
+    data = Replacements().doReplace(data, base_url, url)
     data = data.encode(encoding)
 
     output = data
