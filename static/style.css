@@ -28,13 +28,32 @@ ul, li, p {
   padding: 0;
 }
 
+/* header */
+
+body > header {
+  margin: 3em 0;
+}
+body > header h1 {
+  margin: 0;
+  line-height: 1.2;
+}
+body > header p {
+  margin: 0 0 1em;
+  line-height: 1;
+  text-transform: lowercase;
+  font-size: 80%;
+  color: #888;
+}
+
 body > article h1 {
   font-size: 1em;
+  margin: 3em 0 1em;
 }
 
 article {
   font-size: 90%;
 }
+input#url,
 input#bookmarklet_text {
   display: block;
   width: 100%;

@@ -1,5 +1,5 @@
 import os
-import urllib
+import urllib2
 import re
 from flask import Flask, Response, request, redirect, url_for, render_template
 
@@ -56,6 +56,10 @@ class ErrorPages(object):
                                root_url=request.url_root), 500
 
 
+@app.route('/debug')
+def debugPage():
+    return request.environ['HTTP_USER_AGENT']
+
 @app.route('/unspecified/<path:url>')
 def unspecified(url):
     encodings = ('utf-8', 'euc-jp', 'shift_jis', 'iso-2022-jp')
@@ -70,8 +74,11 @@ def autoEncodeJa(url):
 
     encodings = ('utf-8', 'euc-jp', 'shift_jis', 'iso-2022-jp')
 
+    opener = urllib2.build_opener()
+    opener.addheaders = [('User-agent', request.environ['HTTP_USER_AGENT'])]
+    
     try:
-        url_obj = urllib.urlopen(url)
+        url_obj = opener.open(url)
     except IOError:
         return ErrorPages().invalidUrlError()
 
@@ -108,8 +115,11 @@ def encodeJa(encoding, url):
 
     content_type = 'text/html; charset=%s' % encoding
 
+    opener = urllib2.build_opener()
+    opener.addheaders = [('User-agent', request.environ['HTTP_USER_AGENT'])]
+
     try:
-        url_obj = urllib.urlopen(url)
+        url_obj = opener.open(url)
     except IOError:
         return ErrorPages().invalidUrlError()
 
