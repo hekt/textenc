@@ -42,19 +42,18 @@ class Replacements(object):
         return '/'.join(url.split('/')[:-(depth + 1)])
 
 
-def decodeError():
-    return render_template('decode-error.html',
-                           root_url=request.url_root), 500
+class ErrorPages(object):
+    def decodeError(self):
+        return render_template('decode-error.html',
+                               root_url=request.url_root), 500
 
+    def multiplyError(self):
+        return render_template('multiply-error.html',
+                               root_url=request.url_root), 500
 
-def multiplyError():
-    return render_template('multiply-error.html',
-                           root_url=request.url_root), 500
-
-
-def invalidUrlError():
-    return render_template('invalid-url-error.html',
-                           root_url=request.url_root), 500
+    def invalidUrlError(self):
+        return render_template('invalid-url-error.html',
+                               root_url=request.url_root), 500
 
 
 @app.route('/unspecified/<path:url>')
@@ -67,14 +66,14 @@ def unspecified(url):
 @app.route('/ja/<path:url>')
 def autoEncodeJa(url):
     if url.find(request.url_root) != -1:
-        return multiplyError()
+        return ErrorPages().multiplyError()
 
     encodings = ('utf-8', 'euc-jp', 'shift_jis', 'iso-2022-jp')
 
     try:
         url_obj = urllib.urlopen(url)
     except IOError:
-        return invalidUrlError()
+        return ErrorPages().invalidUrlError()
 
     data = url_obj.read()
 
@@ -93,7 +92,7 @@ def autoEncodeJa(url):
 @app.route('/<encoding>/<path:url>')
 def encodeJa(encoding, url):
     if url.find(request.url_root) != -1:
-        return multiplyError()
+        return ErrorPages().multiplyError()
 
     base_url = "%s%s/" % (request.url_root, str(encoding))
     received_root = '/'.join(url.split('/')[:3])
@@ -112,14 +111,14 @@ def encodeJa(encoding, url):
     try:
         url_obj = urllib.urlopen(url)
     except IOError:
-        return invalidUrlError()
+        return ErrorPages().invalidUrlError()
 
     data = url_obj.read()
 
     try:
         data = data.decode(encoding)
     except UnicodeDecodeError:
-        return decodeError()
+        return ErrorPages().decodeError()
 
     data = re.sub(url_exp, rep_func_url, data)
     data = re.sub(href_exp, rep_func_href, data)
