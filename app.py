@@ -11,18 +11,19 @@ app = Flask(__name__)
 class Replacements(object):
     def doReplace(self, data, base_url, received_url):
         base_tag = '<base href="%s">' % received_url
-
         received_root = '/'.join(received_url.split('/')[:3])
+
         head_exp = re.compile("<head(\s+([^>]|\"[^\"]*?\"|'[^']*?'))*?>", re.I)
         href_exp = re.compile("(<a.*?href=[\"'])([^\"']*?)([\"'].*?>)", re.I)
         base_exp = re.compile(("<base(\s|href=[\"'][^\"']+[\"']|"
                                "target=[\"'][^\"']*[\"'])+>"), re.I)
+
         rep_func_head = lambda x: "\n".join([x.group(0), base_tag])
         rep_func_href = lambda x: self.hrefToUnderApp(x, base_url,
                                                       received_url,
                                                       received_root)
 
-        # add base tag if not use one
+        # add base tag if not using one
         if re.search(base_exp, data) is None:
             data = re.sub(head_exp, rep_func_head, data)
 
@@ -98,10 +99,10 @@ def form():
 
     if encoding is None or url is None:
         return ErrorPages().invalidParameter()
-    
+
     if encoding == 'Ja':
         return redirect(url_for('autoEncodeJa', url=url))
-    
+
     return redirect(url_for('encodeJa', encoding=encoding, url=url))
 
 
@@ -121,7 +122,7 @@ def autoEncodeJa(url):
 
     opener = urllib2.build_opener()
     opener.addheaders = [('User-agent', request.environ['HTTP_USER_AGENT'])]
-    
+
     try:
         url_obj = opener.open(url)
     except IOError:
