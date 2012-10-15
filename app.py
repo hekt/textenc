@@ -1,3 +1,5 @@
+# -*- coding:utf-8 -*-
+
 import os
 import urllib2
 import re
@@ -43,17 +45,31 @@ class Replacements(object):
 
 
 class ErrorPages(object):
-    def decodeError(self):
-        return render_template('decode-error.html',
-                               root_url=request.url_root), 500
+    def basicErrorPage(self, title, message, status_code=500):
+        return render_template('error.html', error_title=title,
+                               error_message=message), status_code
 
-    def multiplyError(self):
-        return render_template('multiply-error.html',
-                               root_url=request.url_root), 500
+    def invalidParameter(self):
+        title = u"パラメータが不足しているか、または不正です"
+        message = (u"選択されたエンコード、もしくは URL が間違っている"
+                   u"可能性があります。")
+        return self.basicErrorPage(title, message)
 
-    def invalidUrlError(self):
-        return render_template('invalid-url-error.html',
-                               root_url=request.url_root), 500
+    def invalidUrl(self):
+        title = u"ウェブページを取得できません"
+        message = u"指定された URL からウェブページを取得できませんでした。"
+        return self.basicErrorPage(title, message)
+
+    def decode(self):
+        title = u"デコードに失敗しました"
+        message = (u"実際に使われている物とは異なるエンコードが"
+                   u"選択されたようです。")
+        return self.basicErrorPage(title, message)
+
+    def multiply(self):
+        title = u"不正な URL です"
+        message = u"%s を含むページでは利用できません。" % request.url_root
+        return self.basicErrorPage(title, message)
 
 
 @app.route('/form')
@@ -62,7 +78,7 @@ def form():
     url = request.args.get('url')
 
     if encoding is None or url is None:
-        return ErrorPages().invalidUrlError()
+        return ErrorPages().invalidParameter()
     
     if encoding == 'Ja':
         return redirect(url_for('autoEncodeJa', url=url))
@@ -80,7 +96,7 @@ def unspecified(url):
 @app.route('/ja/<path:url>')
 def autoEncodeJa(url):
     if url.find(request.url_root) != -1:
-        return ErrorPages().multiplyError()
+        return ErrorPages().multiply()
 
     encodings = ('utf-8', 'euc-jp', 'shift_jis', 'iso-2022-jp')
 
@@ -90,7 +106,7 @@ def autoEncodeJa(url):
     try:
         url_obj = opener.open(url)
     except IOError:
-        return ErrorPages().invalidUrlError()
+        return ErrorPages().invalidUrl()
 
     data = url_obj.read()
 
@@ -109,7 +125,7 @@ def autoEncodeJa(url):
 @app.route('/<encoding>/<path:url>')
 def encodeJa(encoding, url):
     if url.find(request.url_root) != -1:
-        return ErrorPages().multiplyError()
+        return ErrorPages().multiply()
 
     base_url = "%s%s/" % (request.url_root, str(encoding))
     received_root = '/'.join(url.split('/')[:3])
@@ -131,14 +147,14 @@ def encodeJa(encoding, url):
     try:
         url_obj = opener.open(url)
     except IOError:
-        return ErrorPages().invalidUrlError()
+        return ErrorPages().invalidUrl()
 
     data = url_obj.read()
 
     try:
         data = data.decode(encoding)
     except UnicodeDecodeError:
-        return ErrorPages().decodeError()
+        return ErrorPages().decode()
 
     data = re.sub(url_exp, rep_func_url, data)
     data = re.sub(href_exp, rep_func_href, data)
