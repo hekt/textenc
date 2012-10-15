@@ -127,6 +127,8 @@ def autoEncodeJa(url):
         url_obj = opener.open(url)
     except IOError:
         return ErrorPages().invalidUrl()
+    except ValueError:
+        return ErrorPages().invalidUrl()
 
     data = url_obj.read()
 
@@ -156,6 +158,8 @@ def encodeJa(encoding, url):
     try:
         url_obj = opener.open(url)
     except IOError:
+        return ErrorPages().invalidUrl()
+    except ValueError:
         return ErrorPages().invalidUrl()
 
     data = url_obj.read()
