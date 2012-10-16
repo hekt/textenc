@@ -5,6 +5,9 @@ import urllib2
 import re
 from flask import Flask, Response, request, redirect, url_for, render_template
 
+
+KNOWN_ENCODINGS = ('utf-8', 'euc-jp', 'shift_jis', 'iso-2022-jp')
+
 app = Flask(__name__)
 
 
@@ -108,17 +111,14 @@ def form():
 
 @app.route('/unspecified/<path:url>')
 def unspecified(url):
-    encodings = ('utf-8', 'euc-jp', 'shift_jis', 'iso-2022-jp')
     return render_template('unspecified.html', root_url=request.url_root,
-                           received_url=url, encodings=encodings)
+                           received_url=url, encodings=KNOWN_ENCODINGS)
 
 
 @app.route('/ja/<path:url>')
 def autoEncodeJa(url):
     if url.find(request.url_root) != -1:
         return ErrorPages().multiply()
-
-    encodings = ('utf-8', 'euc-jp', 'shift_jis', 'iso-2022-jp')
 
     opener = urllib2.build_opener()
     opener.addheaders = [('User-agent', request.environ['HTTP_USER_AGENT'])]
@@ -132,7 +132,7 @@ def autoEncodeJa(url):
 
     data = url_obj.read()
 
-    for encoding in encodings:
+    for encoding in KNOWN_ENCODINGS:
         try:
             data = data.decode(encoding)
             break
